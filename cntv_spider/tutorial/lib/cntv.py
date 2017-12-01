@@ -9,8 +9,9 @@ from util.common import *
 from share import const
 
 import wget
+from os import rename
 
-def get_download_link(url, quality_type=2, get_dlink_only=True, is_merge=False, is_remain=True):
+def get_download_link(url, target_filename=None, quality_type=2, get_dlink_only=True, is_merge=False, is_remain=True):
     """
     获取视频链接
     :param url: 源地址
@@ -55,10 +56,10 @@ def get_download_link(url, quality_type=2, get_dlink_only=True, is_merge=False, 
     if not get_dlink_only:
         ext = r1(r'\.([^.]+)$', result[0])
         assert ext in ('flv', 'mp4')
-        download_videos(title + '.%s' % ext, dlinks=result, is_merge=is_merge, is_remain=is_remain)
+        download_videos(title + '.%s' % ext, target_filename=target_filename, dlinks=result, is_merge=is_merge, is_remain=is_remain)
 
 
-def wget_video(link_url):
+def wget_video(link_url, target_filename):
     """
     wget下载视频
     :param link_url:
@@ -66,11 +67,15 @@ def wget_video(link_url):
     """
     video_name = link_url.split('/')[-1]
     print('*' * 40)
-    print('donwloading %s' % video_name)
-    cmd = '/usr/bin/wget --no-clobber -O ./%s/%s %s' % (const.TMP_DIR, video_name, link_url)
-    print('wget cmd: %s' % cmd)
-    sub.Popen(cmd, shell=True, stdout=sub.PIPE).stdout.read()
-
+    # print('donwloading %s' % video_name)
+    # cmd = '/usr/bin/wget --no-clobber -O ./%s/%s %s' % (const.TMP_DIR, video_name, link_url)
+    # print('wget cmd: %s' % cmd)
+    # sub.Popen(cmd, shell=True, stdout=sub.PIPE).stdout.read()
+    # print(filename, 'downloaded')
+    # print(target_filename)
+    if target_filename != None:
+        wget.download(link_url, out='videos\\'+target_filename)
+        # print('renaming finished')
 
 def merge_video(output_file):
     """
@@ -84,7 +89,7 @@ def merge_video(output_file):
     sub.Popen(cmd, shell=True, stdout=sub.PIPE).stdout.read()
 
 
-def download_videos(title, dlinks=None, link_file=None, is_merge=False, is_remain=True):
+def download_videos(title, target_filename=None, dlinks=None, link_file=None, is_merge=False, is_remain=True):
     """
     获取所有视频
     :param title:
@@ -104,21 +109,23 @@ def download_videos(title, dlinks=None, link_file=None, is_merge=False, is_remai
                     video_links.append(line)
     if not video_links:
         return
-    print('*' * 40)
-    print('开始下载视频')
-    print(datetime.datetime.now())
+    # print('*' * 40)
+    # print('开始下载视频')
+    # print(datetime.datetime.now())
     pool = mul.Pool(const.PROCESS_MAX_NUM)
-    pool.map(wget_video, video_links)
-    print('*' * 40)
-    print(datetime.datetime.now())
-    print('视频全部下载完成')
+    if len(video_links) != 1:
+        return
+    wget_video(video_links[0], target_filename)
+    # print('*' * 40)
+    # print(datetime.datetime.now())
+    # print('视频全部下载完成')
     if is_merge:
         # 合并分段视频
-        print('*' * 40)
-        print('开始合并分段视频')
+        # print('*' * 40)
+        # print('开始合并分段视频')
         merge_video(title)
-        print('*' * 40)
-        print('视频合并完成')
+        # print('*' * 40)
+        # print('视频合并完成')
         # 删除分段视频
         if not is_remain:
             remove_dir(const.TMP_DIR)
