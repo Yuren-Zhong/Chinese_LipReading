@@ -74,8 +74,10 @@ def wget_video(link_url, target_filename):
     # print(filename, 'downloaded')
     # print(target_filename)
     if target_filename != None:
-        wget.download(link_url, out='videos\\'+target_filename)
-        # print('renaming finished')
+        try:
+            wget.download(link_url, out='videos\\'+target_filename)
+        except Exception as e:
+            pass
 
 def merge_video(output_file):
     """

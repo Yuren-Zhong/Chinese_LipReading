@@ -4,21 +4,41 @@ import scrapy
 from os.path import join
 from urllib import urlopen
 from lib.cntv import get_download_link
+import os
+import subprocess
 
-index = 0
+PAGE = 12
+
+index = 15 * PAGE - 15
 
 def download(url):
     global index
-    get_download_link(url, target_filename=str(index)+'.mp4', quality_type=5, get_dlink_only=False, is_merge=False, is_remain=False)
+    # get_download_link(url, target_filename=str(index)+'.mp4', quality_type=5, get_dlink_only=False, is_merge=False, is_remain=False)
+    cmd = "python download_mp4.py --url " + url + " --index " + str(index) 
+    subprocess.call(cmd)
 
     html_f = urlopen(url)
     html_content = html_f.read()
+    html_f.close()
 
-    _, rest = html_content.split(u'<strong>央视网消息</strong>（新闻联播）：'.encode('utf-8'))
-    script, _ = rest.split('<!--repaste.body.end--></div>')
+    try:
+        _, rest = html_content.split(u'<title>'.encode('utf-8'))
+        title, _ = rest.split('</title>')
 
-    with open(join('scripts', str(index)+'.txt'), 'w') as file:
-        file.write(script)
+        _, rest = html_content.split(u'<strong>央视网消息</strong>（新闻联播）：'.encode('utf-8'))
+        script, _ = rest.split('<!--repaste.body.end--></div>')
+
+        with open(join('scripts', str(index)+'.txt'), 'w') as file:
+            file.write(title)
+            file.write('\n')
+            file.write(script)
+
+    except ValueError as e:
+        try:
+            os.remove(join('videos', str(index)+'.mp4'))
+        except Exception:
+            pass
+        print (e)
 
     index += 1
 
@@ -27,13 +47,13 @@ def download(url):
 class CNTVSpider(scrapy.Spider):
     name = "cntv"
     start_urls = [
-        'http://search.cctv.com/ifsearch.php?qtext=%E6%96%B0%E9%97%BB%E8%81%94%E6%92%AD&type=video&page=1&datepid=1&vtime=0&channel=CCTV-1%E7%BB%BC%E5%90%88%E9%A2%91%E9%81%93&sort=',
+        'http://search.cctv.com/ifsearch.php?qtext=%E6%96%B0%E9%97%BB%E8%81%94%E6%92%AD&type=video&page='+str(PAGE)+'&datepid=1&vtime=0&channel=CCTV-1%E7%BB%BC%E5%90%88%E9%A2%91%E9%81%93&sort=',
     ]
-    page_num = 1
+    page_num = PAGE
 
     def parse(self, response):
-        if self.page_num > 3:
-            return
+        # if self.page_num > 3:
+        #    return
 
         # save html page
         page = response.url.split("/")[-2]

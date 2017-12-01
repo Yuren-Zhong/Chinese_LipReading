@@ -48,19 +48,22 @@ def get_html(url, user_agent, refer_url):
     :param refer_url:
     :return:
     """
-    curl = pycurl.Curl()
-    curl.setopt(pycurl.USERAGENT, user_agent)
-    curl.setopt(pycurl.REFERER, refer_url)
+    try:
+        curl = pycurl.Curl()
+        curl.setopt(pycurl.USERAGENT, user_agent)
+        curl.setopt(pycurl.REFERER, refer_url)
 
-    buffers = StringIO()
-    curl.setopt(pycurl.URL, url)
-    curl.setopt(pycurl.WRITEDATA, buffers)
-    curl.perform()
-    body = buffers.getvalue()
-    buffers.close()
-    curl.close()
+        buffers = StringIO()
+        curl.setopt(pycurl.URL, url)
+        curl.setopt(pycurl.WRITEDATA, buffers)
+        curl.perform()
+        body = buffers.getvalue()
+        buffers.close()
+        curl.close()
 
-    return body
+        return body
+    except Exception:
+        return None
 
 
 def save_to_file(d_links, file_name, base_dir):
