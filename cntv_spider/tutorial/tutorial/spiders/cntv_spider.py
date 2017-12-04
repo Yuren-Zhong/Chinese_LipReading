@@ -7,14 +7,15 @@ from lib.cntv import get_download_link
 import os
 import subprocess
 
-PAGE = 12
+PAGE = 1
 
-index = 15 * PAGE - 15
+index = 5000
 
 def download(url):
     global index
     # get_download_link(url, target_filename=str(index)+'.mp4', quality_type=5, get_dlink_only=False, is_merge=False, is_remain=False)
     cmd = "python download_mp4.py --url " + url + " --index " + str(index) 
+    print(cmd)
     subprocess.call(cmd)
 
     html_f = urlopen(url)
@@ -47,17 +48,16 @@ def download(url):
 class CNTVSpider(scrapy.Spider):
     name = "cntv"
     start_urls = [
-        'http://search.cctv.com/ifsearch.php?qtext=%E6%96%B0%E9%97%BB%E8%81%94%E6%92%AD&type=video&page='+str(PAGE)+'&datepid=1&vtime=0&channel=CCTV-1%E7%BB%BC%E5%90%88%E9%A2%91%E9%81%93&sort=',
+        'http://search.cctv.com/search.php?qtext=%E6%96%B0%E9%97%BB%E8%81%94%E6%92%AD+%E4%BA%BA%E6%B0%91%E6%97%A5%E6%8A%A5&type=video&page='+str(PAGE)+'&datepid=1&vtime=0&channel=CCTV-1%E7%BB%BC%E5%90%88%E9%A2%91%E9%81%93',
     ]
     page_num = PAGE
 
     def parse(self, response):
-        # if self.page_num > 3:
-        #    return
+        if self.page_num > 50:
+            return
 
         # save html page
-        page = response.url.split("/")[-2]
-        filename = 'cntv-%s.html' % str(self.page_num)
+        filename = 'cntv-renminribao-%s.html' % str(self.page_num)
         self.page_num += 1
         with open(join('pages', filename), 'wb') as f:
             f.write(response.body)

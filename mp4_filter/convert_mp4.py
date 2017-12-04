@@ -1,5 +1,6 @@
 from matplotlib import pylab
 import imageio
+from random import randint
 
 import cv2
 import numpy as np
@@ -7,27 +8,17 @@ import numpy as np
 from os import listdir
 from os.path import isfile, join
 
-dirpath = 'C:\\downloads\\test'
+dirpath = '/home/yurzho/Chinese_LipReading/mp4_filter/test'
 filesuffix = '.mp4'
-filename = '0001'
 
-def f():
-    vid = imageio.get_reader(dirpath+filename+filesuffix,  'ffmpeg')
-    nums = [287]
-    for num in nums:
-        image = vid.get_data(num)
-        fig = pylab.figure()
-        fig.suptitle('image #{}'.format(num), fontsize=20)
-        pylab.imshow(image)
-    pylab.show()
-
-def mp4_to_numpy(filepath, imgname):
+def mp4_to_numpy(filepath, image_num):
     cap = cv2.VideoCapture(filepath)
     frameCount = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     frameWidth = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     frameHeight = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
     print(frameHeight, frameWidth)
+    print(filepath)
 
     buf = np.empty((frameCount, frameHeight, frameWidth, 3), np.dtype('uint8'))
 
@@ -42,7 +33,20 @@ def mp4_to_numpy(filepath, imgname):
 
     length = len(buf)
     picked = list()
-    for 
+    total = image_num
+    while total > 0:
+        x = randint(int(length/4), int(length*4/5))
+        if x not in picked:
+            picked.append(x)
+            total -= 1
+
+    ret = list()
+    for i in picked:
+        raw = buf[i]
+        ret.append(buf[i])
+
+    return ret
+
 
     cv2.imwrite(join(dirpath, imgname+'.png'), buf[10])
 

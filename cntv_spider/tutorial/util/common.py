@@ -35,9 +35,12 @@ def match1(text, *patterns):
 
 # DEPRECATED in favor of match1()
 def r1(pattern, text):
-    m = re.search(pattern, text)
-    if m:
-        return m.group(1)
+    try:
+        m = re.search(pattern, text)
+        if m:
+            return m.group(1)
+    except Exception as e:
+        pass
 
 
 def get_html(url, user_agent, refer_url):
