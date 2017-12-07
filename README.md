@@ -1,4 +1,4 @@
-# Chinese_LipReading
+# Chinese Lip Reading
 
 ## Spider over CNTV website
 
