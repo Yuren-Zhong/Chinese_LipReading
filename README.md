@@ -7,8 +7,8 @@ Anaconda should be installed first. I used Anaconda 4.3.30.
 ```	
 conda create -n cntv-spider python=2.7
 activate cntv-spider
-conda install -n cntv-spider scrapy curl
-pip install -n cntv-spider wget pycurl
+conda install scrapy curl
+pip install wget pycurl
 ```
 
 ### Run:
