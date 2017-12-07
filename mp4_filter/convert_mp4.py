@@ -33,14 +33,13 @@ def mp4_to_numpy(filepath, image_num):
 
     length = len(buf)
     picked = list()
-    total = image_num
-    while total > 0:
-        x = randint(int(length/4), int(length*4/5))
-        if x not in picked:
-            picked.append(x)
-            total -= 1
+    part = int(length / image_num)
+
+    for j in range(image_num):
+        picked.append(randint(j*part, (j+1)*part))
 
     ret = list()
+
     for i in picked:
         raw = buf[i]
         ret.append(buf[i])

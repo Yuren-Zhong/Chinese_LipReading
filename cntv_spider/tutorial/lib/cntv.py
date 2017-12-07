@@ -11,7 +11,7 @@ from share import const
 import wget
 from os import rename
 
-def get_download_link(url, target_filename=None, quality_type=2, get_dlink_only=True, is_merge=False, is_remain=True):
+def get_download_link(url, target_filename=None, dirpath=None, quality_type=2, get_dlink_only=True, is_merge=False, is_remain=True):
     """
     获取视频链接
     :param url: 源地址
@@ -56,17 +56,16 @@ def get_download_link(url, target_filename=None, quality_type=2, get_dlink_only=
     if not get_dlink_only:
         ext = r1(r'\.([^.]+)$', result[0])
         assert ext in ('flv', 'mp4')
-        download_videos(title + '.%s' % ext, target_filename=target_filename, dlinks=result, is_merge=is_merge, is_remain=is_remain)
+        download_videos(title + '.%s' % ext, target_filename=target_filename, dirpath=dirpath, dlinks=result, is_merge=is_merge, is_remain=is_remain)
 
 
-def wget_video(link_url, target_filename):
+def wget_video(link_url, target_filename, dirpath):
     """
     wget下载视频
     :param link_url:
     :return:
     """
     video_name = link_url.split('/')[-1]
-    print('*' * 40)
     # print('donwloading %s' % video_name)
     # cmd = '/usr/bin/wget --no-clobber -O ./%s/%s %s' % (const.TMP_DIR, video_name, link_url)
     # print('wget cmd: %s' % cmd)
@@ -75,7 +74,7 @@ def wget_video(link_url, target_filename):
     # print(target_filename)
     if target_filename != None:
         try:
-            wget.download(link_url, out='videos\\'+target_filename)
+            wget.download(link_url, out=dirpath+'\\'+target_filename)
         except Exception as e:
             pass
 
@@ -91,7 +90,7 @@ def merge_video(output_file):
     sub.Popen(cmd, shell=True, stdout=sub.PIPE).stdout.read()
 
 
-def download_videos(title, target_filename=None, dlinks=None, link_file=None, is_merge=False, is_remain=True):
+def download_videos(title, target_filename=None, dirpath=None, dlinks=None, link_file=None, is_merge=False, is_remain=True):
     """
     获取所有视频
     :param title:
@@ -117,7 +116,7 @@ def download_videos(title, target_filename=None, dlinks=None, link_file=None, is
     pool = mul.Pool(const.PROCESS_MAX_NUM)
     if len(video_links) != 1:
         return
-    wget_video(video_links[0], target_filename)
+    wget_video(video_links[0], target_filename, dirpath)
     # print('*' * 40)
     # print(datetime.datetime.now())
     # print('视频全部下载完成')

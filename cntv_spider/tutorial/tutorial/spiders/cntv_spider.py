@@ -6,17 +6,33 @@ from urllib import urlopen
 from lib.cntv import get_download_link
 import os
 import subprocess
+import time
+import datetime
 
-PAGE = 1
-
-index = 5000
+index = 100000
 
 def download(url):
     global index
     # get_download_link(url, target_filename=str(index)+'.mp4', quality_type=5, get_dlink_only=False, is_merge=False, is_remain=False)
-    cmd = "python download_mp4.py --url " + url + " --index " + str(index) 
+    cmd = "python download_mp4.py --url " + url + " --index " + str(index) + " --path " + "new_videos"
+    print('')
     print(cmd)
-    subprocess.call(cmd)
+
+    timeout = 120
+    delay = 10
+
+    proc = subprocess.Popen(cmd)
+
+    while proc.poll() is None and timeout > 0:
+
+        time.sleep(delay)
+        timeout -= delay
+
+    if timeout <= 0:
+        print("")
+        print("timeout")
+        proc.kill()
+    proc.wait()
 
     html_f = urlopen(url)
     html_content = html_f.read()
@@ -29,7 +45,7 @@ def download(url):
         _, rest = html_content.split(u'<strong>央视网消息</strong>（新闻联播）：'.encode('utf-8'))
         script, _ = rest.split('<!--repaste.body.end--></div>')
 
-        with open(join('scripts', str(index)+'.txt'), 'w') as file:
+        with open(join('new_scripts', str(index)+'.txt'), 'w') as file:
             file.write(title)
             file.write('\n')
             file.write(script)
@@ -43,40 +59,149 @@ def download(url):
 
     index += 1
 
-
-
 class CNTVSpider(scrapy.Spider):
     name = "cntv"
-    start_urls = [
-        'http://search.cctv.com/search.php?qtext=%E6%96%B0%E9%97%BB%E8%81%94%E6%92%AD+%E4%BA%BA%E6%B0%91%E6%97%A5%E6%8A%A5&type=video&page='+str(PAGE)+'&datepid=1&vtime=0&channel=CCTV-1%E7%BB%BC%E5%90%88%E9%A2%91%E9%81%93',
-    ]
-    page_num = PAGE
+
+    year = 2017
+    month = 7
+    day = 24
+
+    def start_requests(self):
+        urls = list()
+        urls.append("http://tv.cctv.com/lm/xwlb/day/"+self.date2str()+".shtml")
+        for url in urls:
+            yield scrapy.Request(url=url, callback=self.parse)
+
+    def date2int(self):
+        return self.year * 10000 + self.month * 100 + self.day
+
+    def date2str(self):
+        y = str(self.year)
+        if self.month < 10:
+            m = '0' + str(self.month)
+        else:
+            m = str(self.month)
+        if self.day < 10:
+            d = '0' + str(self.day)
+        else:
+            d = str(self.day)
+        return y + m + d
+
+    def feb_days(self, year):
+        if year % 4 != 0:
+            return 28
+        elif year % 400 != 0:
+            return 29
+        return 28
+
+    def update_date(self):
+        if self.day == 1:
+            if self.month == 1:
+                self.year -= 1
+                self.month = 12
+                self.day = 31
+            else:
+                self.month -= 1
+                if self.month == 2:
+                    self.day = feb_days(self.year)
+                elif self.month in [1,3,5,7,8,10,12]:
+                    self.day = 31
+                else:
+                    self.day = 30
+        else:
+            self.day -= 1
+
+    def compose_next_page(self):
+        date_int = self.date2int()
+        if date_int < 20090625:
+            return None
+        elif date_int < 20100506:
+            return "http://news.cctv.com/program/xwlb/" + self.date2str() + ".shtml"
+        elif date_int < 20110406:
+            return "http://news.cntv.cn/program/xwlb/" + self.date2str() + ".shtml"
+        elif date_int < 20130709:
+            return "http://cctv.cntv.cn/lm/xinwenlianbo/" + self.date2str() + ".shtml"
+        elif date_int < 20160203:
+            return "http://cctv.cntv.cn/lm/xinwenlianbo/" + self.date2str() + ".shtml"
+        else:
+            return "http://tv.cctv.com/lm/xwlb/day/" + self.date2str() + ".shtml"
+
+    def get_links(self):
+        date_int = self.date2int()
+        print(date_int)
+        if date_int < 20090625:
+            return None
+        elif date_int < 20100506:
+            try:
+                return response.css('div.md_bd div.title_list_box ul li a::attr(href)').extract()
+            except Exception as e:
+                return None
+        elif date_int < 20110406:
+            try:
+                return response.css('div.md_bd div.title_list_box ul li a::attr(href)').extract()
+            except Exception as e:
+                return None
+        elif date_int < 20130709:
+            try:
+                return response.css('ul li a::attr(href)').extract()
+            except Exception as e:
+                return None
+        elif date_int < 20160203:
+            try:
+                return response.css('div.md_bd div div.title_list_box_130503 ul.title2 fs_14 li a::attr(href)').extract()
+            except Exception as e:
+                return None
+        else:
+            return response.css('ul li a::attr(href)').extract()
 
     def parse(self, response):
-        if self.page_num > 50:
+        date_int = self.date2int()
+        print(date_int)
+
+        if date_int < 20090625:
             return
 
+        print(datetime.datetime.now())
+
         # save html page
-        filename = 'cntv-renminribao-%s.html' % str(self.page_num)
-        self.page_num += 1
+        filename = 'cntv-%s.html' % self.date2str()
         with open(join('pages', filename), 'wb') as f:
             f.write(response.body)
         self.log('Saved file %s' % filename)
 
         # downloads videos and script
-        links = response.css('ul.list_rec li a.list_rec_video::attr(href)').extract()
-        for link in links:
-            _, rest = link.split('?targetpage=')
-            url, _ = rest.split('&point=video_normal&')
-            download(url)
+        if date_int < 20100506:
+            try:
+                links = response.css('div.md_bd div.title_list_box ul li a::attr(href)').extract()
+            except Exception as e:
+                links = None
+        elif date_int < 20110406:
+            try:
+                links = response.css('div.md_bd div.title_list_box ul li a::attr(href)').extract()
+            except Exception as e:
+                links = None
+        elif date_int < 20130709:
+            try:
+                links = response.css('ul li a::attr(href)').extract()
+            except Exception as e:
+                links = None
+        elif date_int < 20160203:
+            try:
+                links = response.css('div.md_bd div div.title_list_box_130503 ul.title2 fs_14 li a::attr(href)').extract()
+            except Exception as e:
+                links = None
+        else:
+            try:
+                links = response.css('ul li a::attr(href)').extract()
+            except Exception as e:
+                links = None
+
+        if links is not None:
+            for url in links:
+                download(url)
 
         # goto next page
-        page_links = response.css('div.seah_page div.ifpage a::attr(href)').extract()
-        labels = response.css('div.seah_page div.ifpage a span').extract()
-        next_page_link = None
-        for i in range(len(labels)):
-            if labels[i] == u'<span>\u4e0b\u4e00\u9875&gt;&gt;</span>':
-                next_page_link = page_links[i-1]
-                break
+        self.update_date()
+        next_page_link = self.compose_next_page()
         if next_page_link is not None:
             yield response.follow(next_page_link, callback=self.parse)
