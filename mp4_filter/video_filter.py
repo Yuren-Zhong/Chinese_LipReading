@@ -145,11 +145,11 @@ def check_img(img):
 
 if __name__ == '__main__':
     index = args.index
-    videodir_path = 'D:\\Chinese_LipReading\\cntv_spider\\tutorial\\videos'
-    scriptdir_path = 'D:\\Chinese_LipReading\\cntv_spider\\tutorial\\scripts'
+    videodir_path = 'D:\\Chinese_LipReading\\cntv_spider\\tutorial\\new_videos'
+    scriptdir_path = 'D:\\Chinese_LipReading\\cntv_spider\\tutorial\\new_scripts'
 
-    target_videodir_path = 'D:\\Chinese_LipReading\\cntv_spider\\tutorial\\selected\\videos'
-    target_scriptdir_path = 'D:\\Chinese_LipReading\\cntv_spider\\tutorial\\selected\\scripts'
+    target_videodir_path = 'D:\\Chinese_LipReading\\cntv_spider\\tutorial\\selected\\new_videos'
+    target_scriptdir_path = 'D:\\Chinese_LipReading\\cntv_spider\\tutorial\\selected\\new_scripts'
 
     if isfile(join(target_videodir_path, str(index)+'.mp4')) and isfile(join(target_scriptdir_path, str(index)+'.txt')):
         exit()
@@ -157,7 +157,7 @@ if __name__ == '__main__':
     video_exist = isfile(join(videodir_path, str(index)+'.mp4'))
     script_exist = isfile(join(scriptdir_path, str(index)+'.txt'))
 
-    img_num = 5
+    img_num = 10
 
     if video_exist and script_exist:
         imgs = mp4_to_numpy(join(videodir_path, str(index)+'.mp4'), img_num)
